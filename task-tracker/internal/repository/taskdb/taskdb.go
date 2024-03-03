@@ -4,23 +4,25 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	"github.com/google/uuid"
-	"github.com/jackc/pgx"
-	"github.com/nikitych1/awesome-task-exchange-system/task-tracker/internal/entity/task"
+	"github.com/jmoiron/sqlx"
 	"github.com/segmentio/kafka-go"
+
+	"github.com/nikitych1/awesome-task-exchange-system/task-tracker/internal/entity/task"
 )
 
 type DB struct {
-	connection  *pgx.Conn
-	kafkaWriter *kafka.Writer
+	connection  *sqlx.DB
+	kafkaWriter *kafka.Conn
 }
 
-func New(connection *pgx.Conn, writer *kafka.Writer) DB {
+func New(connection *sqlx.DB, writer *kafka.Conn) DB {
 	return DB{connection: connection, kafkaWriter: writer}
 }
 
-func (d DB) ListTasks() ([]task.Task, error) {
-	rows, err := d.connection.Query("SELECT id, jira_id, description, is_open, popug_id FROM tasks where popug_id = $1")
+func (d DB) ListTasks(ctx context.Context) ([]task.Task, error) {
+	rows, err := d.connection.QueryContext(ctx, "SELECT id, jira_id, description, is_open, popug_id FROM tasks where popug_id = $1")
 	if err != nil {
 		return nil, fmt.Errorf("list tasks repo: %w", err)
 	}
@@ -46,10 +48,11 @@ func (d DB) ListTasks() ([]task.Task, error) {
 	return tasks, nil
 }
 
-func (d DB) AddTask(task task.Task) error {
+func (d DB) AddTask(ctx context.Context, task task.Task) error {
 	taskUUID := uuid.New()
 
-	_, err := d.connection.Exec(
+	_, err := d.connection.ExecContext(
+		ctx,
 		"INSERT INTO tasks (description, jira_id, is_open, popug_id, public_id) VALUES ($1, $2, $3, $4, $5)",
 		task.Description,
 		task.JiraID,
@@ -68,19 +71,19 @@ func (d DB) AddTask(task task.Task) error {
 		return fmt.Errorf("marsshal task: %w", err)
 	}
 
-	message := kafka.Message{Topic: "tasks-stream", Value: taskContent}
+	messages := []kafka.Message{{Value: taskContent}}
 
-	if err = d.kafkaWriter.WriteMessages(context.TODO(), message); err != nil {
+	if _, err = d.kafkaWriter.WriteMessages(messages...); err != nil {
 		return fmt.Errorf("write task event: %w", err)
 	}
 
 	return nil
 }
 
-func (d DB) ShuffleTasks() error {
+func (d DB) ShuffleTasks(ctx context.Context) error {
 	return nil
 }
 
-func (d DB) CloseTask() error {
+func (d DB) CloseTask(ctx context.Context) error {
 	return nil
 }

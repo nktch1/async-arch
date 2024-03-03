@@ -1,6 +1,7 @@
 package tasktracker
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,10 +13,10 @@ import (
 )
 
 type service interface {
-	AddTask(task.Task) error
-	ShuffleTasks() error
-	CloseTask() error
-	ListTasks() ([]task.Task, error)
+	AddTask(context.Context, task.Task) error
+	ShuffleTasks(context.Context) error
+	CloseTask(context.Context) error
+	ListTasks(context.Context) ([]task.Task, error)
 }
 
 type server struct {
@@ -36,7 +37,7 @@ func New(service service) *mux.Router {
 }
 
 func (s server) ListTasks(writer http.ResponseWriter, request *http.Request) {
-	tasks, err := s.service.ListTasks()
+	tasks, err := s.service.ListTasks(request.Context())
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
@@ -60,7 +61,7 @@ func (s server) AddTask(writer http.ResponseWriter, request *http.Request) {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
 
-	if err = s.service.AddTask(task); err != nil {
+	if err = s.service.AddTask(request.Context(), task); err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
 }

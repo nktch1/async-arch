@@ -1,12 +1,16 @@
 package tasktracker
 
-import "github.com/nikitych1/awesome-task-exchange-system/task-tracker/internal/entity/task"
+import (
+	"context"
+
+	"github.com/nikitych1/awesome-task-exchange-system/task-tracker/internal/entity/task"
+)
 
 type taskRepository interface {
-	AddTask(task.Task) error
-	ShuffleTasks() error
-	CloseTask() error
-	ListTasks() ([]task.Task, error)
+	AddTask(context.Context, task.Task) error
+	ShuffleTasks(context.Context) error
+	CloseTask(context.Context) error
+	ListTasks(context.Context) ([]task.Task, error)
 }
 
 type TaskTracker struct {
@@ -17,19 +21,18 @@ func New(repo taskRepository) TaskTracker {
 	return TaskTracker{repository: repo}
 }
 
-func (d TaskTracker) ListTasks() ([]task.Task, error) {
-
-	return d.repository.ListTasks()
+func (d TaskTracker) ListTasks(ctx context.Context) ([]task.Task, error) {
+	return d.repository.ListTasks(ctx)
 }
 
-func (d TaskTracker) AddTask(t task.Task) error {
-	return d.repository.AddTask(t)
+func (d TaskTracker) AddTask(ctx context.Context, t task.Task) error {
+	return d.repository.AddTask(ctx, t)
 }
 
-func (d TaskTracker) ShuffleTasks() error {
+func (d TaskTracker) ShuffleTasks(ctx context.Context) error {
 	return nil
 }
 
-func (d TaskTracker) CloseTask() error {
+func (d TaskTracker) CloseTask(ctx context.Context) error {
 	return nil
 }

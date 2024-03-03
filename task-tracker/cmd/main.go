@@ -23,12 +23,12 @@ func main() {
 	//	log.Fatalf("init kafka reader: %s", err.Error())
 	//}
 
-	kafkaWriter, err := initKafkaWriter(ctx)
+	kafkaConnection, err := initKafka(ctx)
 	if err != nil {
 		log.Fatalf("init kafka writer: %s", err.Error())
 	}
 
-	taskTrackerRepository := taskdb.New(pgConnection, kafkaWriter)
+	taskTrackerRepository := taskdb.New(pgConnection, kafkaConnection)
 	taskTrackerService := tasktracker.New(taskTrackerRepository)
 	taskTrackerHandler := handler.New(taskTrackerService)
 

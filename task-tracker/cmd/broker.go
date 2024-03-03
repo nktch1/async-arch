@@ -2,29 +2,44 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 
 	"github.com/segmentio/kafka-go"
 )
 
-func initKafkaReader(ctx context.Context) (*kafka.Reader, error) {
+const tasksStreamTopic = "tasks-stream"
+
+func initKafka(ctx context.Context) (*kafka.Conn, error) {
 	kafkaDSN := os.Getenv("KAFKA_DSN")
+	if kafkaDSN == "" {
+		kafkaDSN = "localhost:9092"
+	}
 
-	reader := kafka.NewReader(kafka.ReaderConfig{
-		Brokers: []string{kafkaDSN},
-		Topic:   "accounts-stream",
-	})
+	conn, err := kafka.DialLeader(ctx, "tcp", kafkaDSN, tasksStreamTopic, 0)
+	if err != nil {
+		return nil, fmt.Errorf("connect to kafka: %w", err)
+	}
 
-	return reader, nil
+	if err = prepareTopics(ctx, conn); err != nil {
+		return nil, fmt.Errorf("prepare kafka topics: %w", err)
+	}
+
+	return conn, nil
 }
 
-func initKafkaWriter(ctx context.Context) (*kafka.Writer, error) {
-	kafkaDSN := os.Getenv("KAFKA_DSN")
+func prepareTopics(ctx context.Context, controllerConn *kafka.Conn) error {
+	topicConfigs := []kafka.TopicConfig{
+		{
+			Topic:             "tasks-stream",
+			NumPartitions:     1,
+			ReplicationFactor: 1,
+		},
+	}
 
-	writer := kafka.NewWriter(kafka.WriterConfig{
-		Brokers: []string{kafkaDSN},
-		Topic:   "tasks-stream",
-	})
+	if err := controllerConn.CreateTopics(topicConfigs...); err != nil {
+		return fmt.Errorf("create kafka controller connection: %w", err)
+	}
 
-	return writer, nil
+	return nil
 }
