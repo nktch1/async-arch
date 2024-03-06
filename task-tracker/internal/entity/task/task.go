@@ -1,8 +1,17 @@
 package task
 
+import uuid "github.com/satori/go.uuid"
+
+type Status string
+
+const (
+	New  Status = "new"
+	Done Status = "done"
+)
+
 type Task struct {
-	Description string `json:"description"`
-	JiraID      string `json:"jira_id"`
-	IsOpen      bool   `json:"is_open"`
-	PopugID     string `json:"popug_id"`
+	PublicID        uuid.UUID `json:"public_id"`
+	AccountPublicID uuid.UUID `json:"account_public_id"`
+	Description     string    `json:"description"`
+	Status          Status    `json:"status"`
 }

@@ -3,11 +3,11 @@ package tasktracker
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 
 	"github.com/gorilla/mux"
+	uuid "github.com/satori/go.uuid"
 
 	"github.com/nikitych1/awesome-task-exchange-system/task-tracker/internal/entity/task"
 )
@@ -15,8 +15,8 @@ import (
 type service interface {
 	AddTask(context.Context, task.Task) error
 	ShuffleTasks(context.Context) error
-	CloseTask(context.Context) error
-	ListTasks(context.Context) ([]task.Task, error)
+	CloseTask(context.Context, uuid.UUID) error
+	ListTasks(context.Context, uuid.UUID) ([]task.Task, error)
 }
 
 type server struct {
@@ -30,14 +30,21 @@ func New(service service) *mux.Router {
 
 	router.HandleFunc("/tasks", srv.ListTasks).Methods(http.MethodGet)
 	router.HandleFunc("/tasks/add", srv.AddTask).Methods(http.MethodPost)
-	router.HandleFunc("/tasks/shuffle", srv.ShuffleTasks)
-	router.HandleFunc("/tasks/close", srv.CloseTask)
+	router.HandleFunc("/tasks/shuffle", srv.ShuffleTasks).Methods(http.MethodPatch)
+	router.HandleFunc("/tasks/close", srv.CloseTask).Methods(http.MethodPatch)
 
 	return router
 }
 
 func (s server) ListTasks(writer http.ResponseWriter, request *http.Request) {
-	tasks, err := s.service.ListTasks(request.Context())
+	accountPublicIDString := request.URL.Query().Get("account_public_id")
+
+	accountPublicID, err := uuid.FromString(accountPublicIDString)
+	if err != nil {
+		http.Error(writer, err.Error(), http.StatusInternalServerError)
+	}
+
+	tasks, err := s.service.ListTasks(request.Context(), accountPublicID)
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
@@ -67,11 +74,20 @@ func (s server) AddTask(writer http.ResponseWriter, request *http.Request) {
 }
 
 func (s server) ShuffleTasks(writer http.ResponseWriter, request *http.Request) {
-	fmt.Fprintln(writer, "ShuffleTasks")
-
+	if err := s.service.ShuffleTasks(request.Context()); err != nil {
+		http.Error(writer, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 func (s server) CloseTask(writer http.ResponseWriter, request *http.Request) {
+	taskPublicIDString := request.URL.Query().Get("public_id")
 
-	fmt.Fprintln(writer, "CloseTask")
+	taskPublicID, err := uuid.FromString(taskPublicIDString)
+	if err != nil {
+		http.Error(writer, err.Error(), http.StatusInternalServerError)
+	}
+
+	if err = s.service.CloseTask(request.Context(), taskPublicID); err != nil {
+		http.Error(writer, err.Error(), http.StatusInternalServerError)
+	}
 }
