@@ -23,7 +23,7 @@ func (d DB) CreateAccount(ctx context.Context) error {
 
 func (d DB) ListAssigneeAccounts(ctx context.Context) ([]account.Account, error) {
 	selectQuery := `
-SELECT (id, public_id, name, email, role, created_at, updated_at)
+SELECT id, public_id, name, email, role, created_at, updated_at
 FROM accounts
 WHERE role in ('employee', 'manager')`
 
