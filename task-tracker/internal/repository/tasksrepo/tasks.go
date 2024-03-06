@@ -26,6 +26,7 @@ SELECT id, public_id, account_public_id, description, status, created_at, update
 FROM tasks 
 WHERE account_public_id = $1
 `
+
 	rows, err := d.connection.QueryContext(ctx, selectQuery, accountPublicID)
 	if err != nil {
 		return nil, fmt.Errorf("list tasks repo: %w", err)
@@ -83,9 +84,15 @@ func (d DB) ShuffleTasks(ctx context.Context, accounts []account.Account) error 
 	selectQuery := `
 SELECT id, public_id, account_public_id, description, status, created_at, updated_at 
 FROM tasks 
-WHERE status = 'new'`
+WHERE status = 'new'
+`
+	tx, err := d.connection.BeginTxx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("create tx repo: %w", err)
+	}
+	defer tx.Rollback()
 
-	rows, err := d.connection.QueryContext(ctx, selectQuery)
+	rows, err := tx.QueryContext(ctx, selectQuery)
 	if err != nil {
 		return fmt.Errorf("list tasks repo: %w", err)
 	}
@@ -127,7 +134,7 @@ WHERE public_id = $2`
 	for _, openedTask := range openedTasks {
 		randomAssigneeID := getRandomAccount(accounts).PublicID
 
-		_, err = d.connection.ExecContext(
+		_, err = tx.ExecContext(
 			ctx,
 			updateQuery,
 			randomAssigneeID,
@@ -136,6 +143,10 @@ WHERE public_id = $2`
 		if err != nil {
 			return fmt.Errorf("close task repo: %w", err)
 		}
+	}
+
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("commit tx task repo: %w", err)
 	}
 
 	return nil
