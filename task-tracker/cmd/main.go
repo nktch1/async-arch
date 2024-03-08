@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"log"
 
-	handler "github.com/nikitych1/awesome-task-exchange-system/task-tracker/internal/gateways/openapi/tasktracker"
+	handler "github.com/nikitych1/awesome-task-exchange-system/task-tracker/internal/gateway/openapi/tasktracker"
+	"github.com/nikitych1/awesome-task-exchange-system/task-tracker/internal/producer/taskworkfloweventproducer"
 	"github.com/nikitych1/awesome-task-exchange-system/task-tracker/internal/repository/accountsrepo"
 	"github.com/nikitych1/awesome-task-exchange-system/task-tracker/internal/repository/tasksrepo"
 	"github.com/nikitych1/awesome-task-exchange-system/task-tracker/internal/usecase/tasktracker"
@@ -26,7 +27,8 @@ func main() {
 
 	tasksRepository := tasksrepo.New(pgConnection)
 	accountsRepository := accountsrepo.New(pgConnection)
-	taskTrackerService := tasktracker.New(tasksRepository, accountsRepository, kafkaConnection)
+	taskWorkflowEventProducer := taskworkfloweventproducer.New(kafkaConnection)
+	taskTrackerService := tasktracker.New(tasksRepository, accountsRepository, taskWorkflowEventProducer)
 	taskTrackerHandler := handler.New(taskTrackerService)
 
 	listenAndServe(ctx, taskTrackerHandler)
