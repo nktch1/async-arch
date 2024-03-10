@@ -12,7 +12,7 @@ import (
 )
 
 func listenAndServe(ctx context.Context, handler *mux.Router) {
-	httpServer := http.Server{Addr: ":8080", Handler: handler}
+	httpServer := http.Server{Addr: ":8081", Handler: handler}
 
 	idleConnectionsClosed := make(chan struct{})
 

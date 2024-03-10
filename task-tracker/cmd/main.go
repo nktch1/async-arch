@@ -33,7 +33,9 @@ func main() {
 	taskTrackerService := tasktracker.New(tasksRepository, accountsRepository, taskWorkflowEventProducer)
 	taskTrackerHandler := handler.New(taskTrackerService)
 
+	fmt.Println("task tracker service is listening on :8080...")
+
 	listenAndServe(ctx, taskTrackerHandler)
 
-	fmt.Println("task-tracker finished...")
+	fmt.Println("task-tracker service finished...")
 }

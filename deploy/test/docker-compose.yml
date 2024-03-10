@@ -88,11 +88,22 @@ services:
     networks:
       - ates-network
 
-  task-tracker-db:
+  ates-task-tracker-db:
     image: postgres:16
     ports:
       - "5433:5432"
-    container_name: task-tracker-db
+    container_name: ates-task-tracker-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+    networks:
+      - ates-network
+
+  ates-accounting-db:
+    image: postgres:16
+    ports:
+      - "5434:5432"
+    container_name: ates-accounting-db
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
@@ -101,6 +112,7 @@ services:
 
   ates-schema-registry:
     image: confluentinc/cp-schema-registry:7.6.0
+    container_name: ates-schema-registry
     depends_on:
       - zookeeper
       - broker
