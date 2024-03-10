@@ -20,14 +20,16 @@ func main() {
 		log.Fatalf("init storage: %s", err.Error())
 	}
 
-	kafkaConnection, err := initKafka(ctx)
+	kafkaProducer, err := initKafka(ctx)
+	defer kafkaProducer.Close()
+
 	if err != nil {
-		log.Fatalf("init kafka writer: %s", err.Error())
+		log.Fatalf("init kafka producer: %s", err.Error())
 	}
 
 	tasksRepository := tasksrepo.New(pgConnection)
 	accountsRepository := accountsrepo.New(pgConnection)
-	taskWorkflowEventProducer := taskworkfloweventproducer.New(kafkaConnection)
+	taskWorkflowEventProducer := taskworkfloweventproducer.New(kafkaProducer)
 	taskTrackerService := tasktracker.New(tasksRepository, accountsRepository, taskWorkflowEventProducer)
 	taskTrackerHandler := handler.New(taskTrackerService)
 

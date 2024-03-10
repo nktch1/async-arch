@@ -26,3 +26,6 @@ migrations-down:
 	GOOSE_DRIVER=$(GOOSE_DRIVER) \
 	GOOSE_DBSTRING=$(GOOSE_DBSTRING) \
 	goose -dir ./migrations down
+
+generate-schemas:
+	protoc --go_out=. --proto_path=../schemas/events ../schemas/events/tasks-workflow.proto
