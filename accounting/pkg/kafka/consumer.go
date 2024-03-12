@@ -1,13 +1,14 @@
 package kafka
 
 import (
+	"context"
 	"fmt"
-	"log"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/confluentinc/confluent-kafka-go/schemaregistry"
 	"github.com/confluentinc/confluent-kafka-go/schemaregistry/serde"
 	"github.com/confluentinc/confluent-kafka-go/schemaregistry/serde/protobuf"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
@@ -19,8 +20,12 @@ const (
 
 // SRConsumer interface
 type SRConsumer interface {
-	Run(messageType protoreflect.MessageType, topic string) error
-	Close()
+	Run(ctx context.Context, messageType protoreflect.MessageType, topic string, handler eventsConsumer) error
+	Close() error
+}
+
+type eventsConsumer interface {
+	Consume(ctx context.Context, msg proto.Message) error
 }
 
 type srConsumer struct {
@@ -61,37 +66,43 @@ func (c *srConsumer) RegisterMessage(messageType protoreflect.MessageType) error
 }
 
 // Run consumer
-func (c *srConsumer) Run(messageType protoreflect.MessageType, topic string) error {
+func (c *srConsumer) Run(ctx context.Context, messageType protoreflect.MessageType, topic string, handler eventsConsumer) error {
 	if err := c.consumer.SubscribeTopics([]string{topic}, nil); err != nil {
 		return err
 	}
+
 	if err := c.deserializer.ProtoRegistry.RegisterMessage(messageType); err != nil {
 		return err
 	}
+
 	for {
 		kafkaMsg, err := c.consumer.ReadMessage(noTimeout)
 		if err != nil {
 			return err
 		}
+
 		msg, err := c.deserializer.Deserialize(topic, kafkaMsg.Value)
 		if err != nil {
 			return err
 		}
-		c.handleMessage(msg, int64(kafkaMsg.TopicPartition.Offset))
+
+		if err = handler.Consume(ctx, msg.(proto.Message)); err != nil {
+			return err
+		}
+
 		if _, err = c.consumer.CommitMessage(kafkaMsg); err != nil {
 			return err
 		}
 	}
 }
 
-func (c *srConsumer) handleMessage(message interface{}, offset int64) {
-	fmt.Printf("message %v with offset %d\n", message, offset)
-}
-
 // Close all connections
-func (c *srConsumer) Close() {
+func (c *srConsumer) Close() error {
 	if err := c.consumer.Close(); err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("close: %w", err)
 	}
+
 	c.deserializer.Close()
+
+	return nil
 }

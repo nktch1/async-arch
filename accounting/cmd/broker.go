@@ -11,12 +11,12 @@ import (
 func initKafka(ctx context.Context) (kafka.SRProducer, kafka.SRConsumer, error) {
 	kafkaDSN := os.Getenv("KAFKA_DSN")
 	if kafkaDSN == "" {
-		kafkaDSN = "localhost:9092"
+		kafkaDSN = "localhost"
 	}
 
 	schemaRegistryURL := os.Getenv("SCHEMA_REGISTRY_URL")
-	if kafkaDSN == "" {
-		kafkaDSN = "localhost:8085"
+	if schemaRegistryURL == "" {
+		schemaRegistryURL = "http://localhost:8085"
 	}
 
 	producer, err := kafka.NewProducer(kafkaDSN, schemaRegistryURL)

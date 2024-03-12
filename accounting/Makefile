@@ -28,4 +28,4 @@ migrations-down:
 	goose -dir ./migrations down
 
 generate-schemas:
-	protoc --go_out=. --proto_path=../schemas/events ../schemas/events/tasks-workflow.proto
+	protoc --go_out=. --proto_path=../schemas/events ../schemas/events/task-workflow.proto

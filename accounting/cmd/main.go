@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/nikitych1/awesome-task-exchange-system/accounting/internal/consumers/taskworkfloweventconsumer"
 	handler "github.com/nikitych1/awesome-task-exchange-system/accounting/internal/gateway/openapi/accounting"
 	"github.com/nikitych1/awesome-task-exchange-system/accounting/internal/repository/transactionrepo"
 	"github.com/nikitych1/awesome-task-exchange-system/accounting/internal/usecase/accounting"
@@ -29,6 +30,9 @@ func main() {
 	transactionRepository := transactionrepo.New(pgConnection)
 	accountingService := accounting.New(transactionRepository)
 	accountingHandler := handler.New(accountingService)
+	taskWorkflowEventConsumer := taskworkfloweventconsumer.New()
+
+	go consumeAndServe(ctx, kafkaConsumer, taskWorkflowEventConsumer)
 
 	fmt.Println("accounting service is listening on :8081...")
 

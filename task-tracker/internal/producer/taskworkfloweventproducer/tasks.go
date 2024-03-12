@@ -3,13 +3,12 @@ package taskworkfloweventproducer
 import (
 	"context"
 	"fmt"
-
 	"github.com/nikitych1/awesome-task-exchange-system/task-tracker/pkg/kafka"
 
 	"github.com/nikitych1/awesome-task-exchange-system/task-tracker/internal/entity/task"
 )
 
-const tasksWorkflowBusinessEventsTopic = "tasks-workflow"
+const tasksWorkflowBusinessEventsTopic = "task-workflow"
 
 type TaskWorkflowEventProducer struct {
 	kafka.SRProducer
