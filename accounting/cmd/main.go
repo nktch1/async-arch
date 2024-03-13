@@ -7,7 +7,8 @@ import (
 
 	"github.com/nikitych1/awesome-task-exchange-system/accounting/internal/consumers/taskworkfloweventconsumer"
 	handler "github.com/nikitych1/awesome-task-exchange-system/accounting/internal/gateway/openapi/accounting"
-	"github.com/nikitych1/awesome-task-exchange-system/accounting/internal/repository/transactionrepo"
+	"github.com/nikitych1/awesome-task-exchange-system/accounting/internal/repository/tasksrepo"
+	"github.com/nikitych1/awesome-task-exchange-system/accounting/internal/repository/transactionsrepo"
 	"github.com/nikitych1/awesome-task-exchange-system/accounting/internal/usecase/accounting"
 )
 
@@ -27,10 +28,11 @@ func main() {
 		log.Fatalf("init kafka producer: %s", err.Error())
 	}
 
-	transactionRepository := transactionrepo.New(pgConnection)
-	accountingService := accounting.New(transactionRepository)
+	transactionsRepository := transactionsrepo.New(pgConnection)
+	tasksRepository := tasksrepo.New(pgConnection)
+	accountingService := accounting.New(transactionsRepository)
 	accountingHandler := handler.New(accountingService)
-	taskWorkflowEventConsumer := taskworkfloweventconsumer.New()
+	taskWorkflowEventConsumer := taskworkfloweventconsumer.New(tasksRepository)
 
 	go consumeAndServe(ctx, kafkaConsumer, taskWorkflowEventConsumer)
 

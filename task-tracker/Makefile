@@ -12,6 +12,9 @@ install:
 	go build -o ${GOBIN}/${ARTEFACT_NAME} cmd/*.go
 	chmod +x ${GOBIN}/${ARTEFACT_NAME}
 
+run:
+	go run cmd/*.go
+
 migrations-status:
 	GOOSE_DRIVER=$(GOOSE_DRIVER) \
 	GOOSE_DBSTRING=$(GOOSE_DBSTRING) \

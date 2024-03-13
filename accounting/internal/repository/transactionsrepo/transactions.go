@@ -1,4 +1,4 @@
-package transactionrepo
+package transactionsrepo
 
 import (
 	"context"

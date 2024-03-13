@@ -60,15 +60,18 @@ WHERE account_public_id = $1
 }
 
 func (d DB) AddTask(ctx context.Context, task taskmodel.Task) (taskmodel.Task, error) {
+	publicID := uuid.NewV4()
+
 	insertQuery := `
 INSERT INTO tasks 
-    (account_public_id, description, status) 
+    (public_id, account_public_id, description, status) 
 VALUES 
-    ($1, $2, $3)`
+    ($1, $2, $3, $4)`
 
 	_, err := d.connection.ExecContext(
 		ctx,
 		insertQuery,
+		publicID,
 		task.AccountPublicID,
 		task.Description,
 		task.Status,
@@ -77,6 +80,7 @@ VALUES
 		return taskmodel.Task{}, fmt.Errorf("add task repo: %w", err)
 	}
 
+	task.PublicID = publicID
 	return task, nil
 }
 
