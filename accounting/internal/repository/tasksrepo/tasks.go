@@ -46,8 +46,6 @@ SET
 }
 
 func (d DB) ShuffleTasks(ctx context.Context, task taskmodel.Task) error {
-	fmt.Println(task.PublicID)
-
 	updateQuery := `
 UPDATE tasks
 SET account_public_id = $1
@@ -67,5 +65,20 @@ WHERE public_id = $2`
 }
 
 func (d DB) CloseTask(ctx context.Context, task taskmodel.Task) error {
+	updateQuery := `
+UPDATE tasks
+SET status = $1
+WHERE public_id = $2`
+
+	_, err := d.connection.ExecContext(
+		ctx,
+		updateQuery,
+		task.Status,
+		task.PublicID,
+	)
+	if err != nil {
+		return fmt.Errorf("close task repo: %w", err)
+	}
+
 	return nil
 }

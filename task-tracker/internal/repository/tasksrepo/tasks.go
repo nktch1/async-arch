@@ -135,14 +135,15 @@ UPDATE tasks
 SET account_public_id = $1
 WHERE public_id = $2`
 
-	for _, openedTask := range openedTasks {
+	for idx := range openedTasks {
 		randomAssigneeID := getRandomAccount(accounts).PublicID
+		openedTasks[idx].AccountPublicID = randomAssigneeID
 
 		_, err = tx.ExecContext(
 			ctx,
 			updateQuery,
 			randomAssigneeID,
-			openedTask.PublicID,
+			openedTasks[idx].PublicID,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("close task repo: %w", err)
@@ -212,5 +213,6 @@ WHERE public_id = $1`
 		return taskmodel.Task{}, fmt.Errorf("commit tx task repo: %w", err)
 	}
 
+	task.Status = taskmodel.DoneTaskStatus
 	return task, nil
 }
