@@ -10,7 +10,7 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/nikitych1/awesome-task-exchange-system/accounting/internal/consumers/taskworkfloweventconsumer"
+	"github.com/nikitych1/awesome-task-exchange-system/accounting/internal/consumer/taskworkfloweventconsumer"
 	prototask "github.com/nikitych1/awesome-task-exchange-system/accounting/pkg/events/proto/task"
 	"github.com/nikitych1/awesome-task-exchange-system/accounting/pkg/kafka"
 )

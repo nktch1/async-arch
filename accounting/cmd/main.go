@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/nikitych1/awesome-task-exchange-system/accounting/internal/consumers/taskworkfloweventconsumer"
+	"github.com/nikitych1/awesome-task-exchange-system/accounting/internal/consumer/taskworkfloweventconsumer"
 	handler "github.com/nikitych1/awesome-task-exchange-system/accounting/internal/gateway/openapi/accounting"
 	"github.com/nikitych1/awesome-task-exchange-system/accounting/internal/repository/tasksrepo"
 	"github.com/nikitych1/awesome-task-exchange-system/accounting/internal/repository/transactionsrepo"

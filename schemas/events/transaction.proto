@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+option go_package = "./pkg/events/proto/transaction";
+
+package transaction;
+
+enum TaskWorkflowEventType {
+  TASK_ADDED_EVENT = 0;
+  TASK_CLOSED_EVENT = 1;
+  TASK_SHUFFLED_EVENT = 2;
+}
+
+enum TaskStatus {
+  NEW_TASK_STATUS = 0;
+  DONE_TASK_STATUS = 1;
+}
+
+message Task {
+  string PublicID = 1;
+  string AccountPublicID = 2;
+  string Description = 3;
+  TaskStatus Status = 4;
+}
+
+message TaskWorkflowEvent {
+  string EventID = 1;
+  string EventVersion = 2;
+  string EventTime = 3;
+  string Producer = 4;
+
+  TaskWorkflowEventType EventName = 5;
+
+  Task TaskPayload = 6;
+}
+
+
