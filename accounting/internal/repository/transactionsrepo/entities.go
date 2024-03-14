@@ -15,7 +15,8 @@ type transactionEntity struct {
 	AccountPublicID string `db:"account_public_id"`
 	TaskPublicID    string `db:"task_public_id"`
 
-	Amount float64 `db:"amount"`
+	Credit float64 `db:"credit"`
+	Debit  float64 `db:"debit"`
 
 	CreatedAt string `db:"created_at"`
 	UpdatedAt string `db:"updated_at"`
@@ -36,6 +37,7 @@ func transactionEntityToTransaction(t transactionEntity) (transaction.Transactio
 		AccountPublicID: accountPublicIDUUID,
 		TaskPublicID:    taskPublicID,
 
-		Amount: t.Amount,
+		Credit: t.Credit,
+		Debit:  t.Debit,
 	}, nil
 }

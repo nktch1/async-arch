@@ -21,7 +21,7 @@ func New(connection *sqlx.DB) DB {
 
 func (d DB) ListTransactions(ctx context.Context) ([]transaction.Transaction, error) {
 	selectQuery := `
-	SELECT id, account_public_id, task_public_id, amount, created_at, updated_at
+	SELECT id, account_public_id, task_public_id, credit, debit, created_at, updated_at
 	FROM transactions
 `
 	rows, err := d.connection.QueryxContext(ctx, selectQuery)
@@ -38,7 +38,8 @@ func (d DB) ListTransactions(ctx context.Context) ([]transaction.Transaction, er
 			&transactionToScan.ID,
 			&transactionToScan.AccountPublicID,
 			&transactionToScan.TaskPublicID,
-			&transactionToScan.Amount,
+			&transactionToScan.Credit,
+			&transactionToScan.Debit,
 			&transactionToScan.CreatedAt,
 			&transactionToScan.UpdatedAt,
 		); err != nil {
@@ -58,7 +59,7 @@ func (d DB) ListTransactions(ctx context.Context) ([]transaction.Transaction, er
 
 func (d DB) ListTransactionsByAccount(ctx context.Context, accountPublicID uuid.UUID) ([]transaction.Transaction, error) {
 	selectQuery := `
-	SELECT id, account_public_id, task_public_id, amount, created_at, updated_at
+	SELECT id, account_public_id, task_public_id, credit, debit, created_at, updated_at
 	FROM transactions
 	WHERE account_public_id = $1
 `
@@ -76,7 +77,8 @@ func (d DB) ListTransactionsByAccount(ctx context.Context, accountPublicID uuid.
 			&transactionToScan.ID,
 			&transactionToScan.AccountPublicID,
 			&transactionToScan.TaskPublicID,
-			&transactionToScan.Amount,
+			&transactionToScan.Credit,
+			&transactionToScan.Debit,
 			&transactionToScan.CreatedAt,
 			&transactionToScan.UpdatedAt,
 		); err != nil {
@@ -97,7 +99,7 @@ func (d DB) ListTransactionsByAccount(ctx context.Context, accountPublicID uuid.
 func (d DB) ChargeMoney(ctx context.Context, task taskmodel.Task) error {
 	insertQuery := `
 INSERT INTO transactions
-	(task_public_id, account_public_id, amount)
+	(task_public_id, account_public_id, debit)
 VALUES
     ($1, $2, $3)
 `
@@ -106,7 +108,7 @@ VALUES
 		insertQuery,
 		task.PublicID,
 		task.AccountPublicID,
-		-task.Cost,
+		task.Cost,
 	)
 	if err != nil {
 		return fmt.Errorf("shuffle task repo: %w", err)
@@ -118,8 +120,8 @@ VALUES
 func (d DB) PayMoney(ctx context.Context, task taskmodel.Task) error {
 	insertQuery := `
 INSERT INTO transactions
-	(task_public_id, account_public_id, amount)
-SELECT public_id AS task_public_id, account_public_id, reward AS amount 
+	(task_public_id, account_public_id, credit)
+SELECT public_id AS task_public_id, account_public_id, reward AS credit 
 FROM tasks
 WHERE public_id = $1
 `

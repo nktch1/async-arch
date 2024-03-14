@@ -39,7 +39,8 @@ func (a Accounting) ListTransactions(ctx context.Context) (ListTransactionsRespo
 	response.Transactions = transactions
 
 	for _, transaction := range transactions {
-		response.Income += transaction.Amount
+		response.Income += transaction.Credit
+		response.Income -= transaction.Debit
 	}
 
 	return response, nil
@@ -62,7 +63,8 @@ func (a Accounting) ListTransactionsByAccount(ctx context.Context, accountPublic
 	response.Transactions = transactions
 
 	for _, transaction := range transactions {
-		response.Income += transaction.Amount
+		response.Income += transaction.Credit
+		response.Income -= transaction.Debit
 	}
 
 	return response, nil
