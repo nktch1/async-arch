@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS tasks (
     status task_status NOT NULL,
     --
     cost NUMERIC(10,5) DEFAULT 0 NOT NULL,
+    reward NUMERIC(10,5) DEFAULT 0 NOT NULL,
     --
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL

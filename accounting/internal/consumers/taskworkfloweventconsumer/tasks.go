@@ -59,12 +59,18 @@ func (t TaskWorkflowEventConsumer) consumeAddedTaskEvent(ctx context.Context, ev
 		return rand.Intn(maxIdx-minIdx) + minIdx
 	}
 
+	getRandomReward := func() int {
+		minIdx, maxIdx := 20, 40
+		return rand.Intn(maxIdx-minIdx) + minIdx
+	}
+
 	task, err := taskEventToModelTask(event)
 	if err != nil {
 		return fmt.Errorf("convert event to model: %w", err)
 	}
 
 	task.Cost = getRandomCost()
+	task.Reward = getRandomReward()
 
 	if err = t.tasksRepository.AddTask(ctx, task); err != nil {
 		return fmt.Errorf("replicate add task: %w", err)

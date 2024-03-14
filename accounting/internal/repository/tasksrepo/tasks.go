@@ -20,9 +20,9 @@ func (d DB) AddTask(ctx context.Context, task taskmodel.Task) error {
 	fmt.Println(task.PublicID)
 	insertQuery := `
 INSERT INTO tasks 
-    (public_id, account_public_id, description, status, cost) 
+    (public_id, account_public_id, description, status, cost, reward) 
 VALUES 
-    ($1, $2, $3, $4, $5)
+    ($1, $2, $3, $4, $5, $6)
 ON CONFLICT (public_id) DO UPDATE
 SET
     account_public_id = excluded.account_public_id, 
@@ -37,6 +37,7 @@ SET
 		task.Description,
 		task.Status,
 		task.Cost,
+		task.Reward,
 	)
 	if err != nil {
 		return fmt.Errorf("add task repo: %w", err)

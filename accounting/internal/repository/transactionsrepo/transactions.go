@@ -52,7 +52,7 @@ func (d DB) PayMoney(ctx context.Context, task taskmodel.Task) error {
 	insertQuery := `
 INSERT INTO transactions
 	(task_public_id, account_public_id, amount)
-SELECT public_id AS task_public_id, account_public_id, cost AS amount 
+SELECT public_id AS task_public_id, account_public_id, reward AS amount 
 FROM tasks
 WHERE public_id = $1
 `

@@ -15,4 +15,5 @@ type Task struct {
 	Description     string    `json:"description"`
 	Status          Status    `json:"status"`
 	Cost            int       `json:"cost"`
+	Reward          int       `json:"reward"`
 }
