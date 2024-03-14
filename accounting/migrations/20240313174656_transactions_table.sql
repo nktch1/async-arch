@@ -3,6 +3,7 @@
 CREATE TABLE IF NOT EXISTS transactions (
     id bigserial PRIMARY KEY,
     --
+    billing_cycle_id bigserial NOT NULL,
     task_public_id uuid NOT NULL,
     account_public_id uuid NOT NULL,
     --
