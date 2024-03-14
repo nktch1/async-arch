@@ -1,11 +1,10 @@
 package transaction
 
+import uuid "github.com/satori/go.uuid"
+
 type Transaction struct {
-	PublicID string `json:"public_id"`
+	AccountPublicID uuid.UUID `json:"account_public_id"`
+	TaskPublicID    uuid.UUID `json:"task_public_id"`
 
-	AccountPublicID string `json:"account_public_id"`
-
-	TaskPublicID string `json:"task_public_id"`
-
-	Value int `json:"value"`
+	Amount float64 `json:"amount"`
 }

@@ -2,6 +2,7 @@ package accounting
 
 import (
 	"context"
+	"fmt"
 
 	uuid "github.com/satori/go.uuid"
 
@@ -21,10 +22,48 @@ func New(transactionRepo transactionRepository) Accounting {
 	return Accounting{transactionRepository: transactionRepo}
 }
 
-func (a Accounting) ListTransactions(context.Context) ([]transaction.Transaction, error) {
-	return nil, nil
+type ListTransactionsResponse struct {
+	Income float64 `json:"income"`
+
+	Transactions []transaction.Transaction `json:"transactions"`
 }
 
-func (a Accounting) ListTransactionsByAccount(ctx context.Context, accountPublicID uuid.UUID) ([]transaction.Transaction, error) {
-	return nil, nil
+func (a Accounting) ListTransactions(ctx context.Context) (ListTransactionsResponse, error) {
+	var response ListTransactionsResponse
+
+	transactions, err := a.transactionRepository.ListTransactions(ctx)
+	if err != nil {
+		return ListTransactionsResponse{}, fmt.Errorf("read transactions: %w", err)
+	}
+
+	response.Transactions = transactions
+
+	for _, transaction := range transactions {
+		response.Income += transaction.Amount
+	}
+
+	return response, nil
+}
+
+type ListTransactionsByAccountResponse struct {
+	Income float64 `json:"income"`
+
+	Transactions []transaction.Transaction `json:"transactions"`
+}
+
+func (a Accounting) ListTransactionsByAccount(ctx context.Context, accountPublicID uuid.UUID) (ListTransactionsByAccountResponse, error) {
+	var response ListTransactionsByAccountResponse
+
+	transactions, err := a.transactionRepository.ListTransactionsByAccount(ctx, accountPublicID)
+	if err != nil {
+		return ListTransactionsByAccountResponse{}, fmt.Errorf("read transactions: %w", err)
+	}
+
+	response.Transactions = transactions
+
+	for _, transaction := range transactions {
+		response.Income += transaction.Amount
+	}
+
+	return response, nil
 }

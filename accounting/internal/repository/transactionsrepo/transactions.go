@@ -20,11 +20,78 @@ func New(connection *sqlx.DB) DB {
 }
 
 func (d DB) ListTransactions(ctx context.Context) ([]transaction.Transaction, error) {
-	return nil, nil
+	selectQuery := `
+	SELECT id, account_public_id, task_public_id, amount, created_at, updated_at
+	FROM transactions
+`
+	rows, err := d.connection.QueryxContext(ctx, selectQuery)
+	if err != nil {
+		return nil, fmt.Errorf("select transactions by account id repo: %w", err)
+	}
+
+	var transactions []transaction.Transaction
+
+	for rows.Next() {
+		var transactionToScan transactionEntity
+
+		if err = rows.Scan(
+			&transactionToScan.ID,
+			&transactionToScan.AccountPublicID,
+			&transactionToScan.TaskPublicID,
+			&transactionToScan.Amount,
+			&transactionToScan.CreatedAt,
+			&transactionToScan.UpdatedAt,
+		); err != nil {
+			return nil, fmt.Errorf("scan transaction: %w", err)
+		}
+
+		transaction, err := transactionEntityToTransaction(transactionToScan)
+		if err != nil {
+			return nil, fmt.Errorf("convert transaction: %w", err)
+		}
+
+		transactions = append(transactions, transaction)
+	}
+
+	return transactions, nil
 }
 
 func (d DB) ListTransactionsByAccount(ctx context.Context, accountPublicID uuid.UUID) ([]transaction.Transaction, error) {
-	return nil, nil
+	selectQuery := `
+	SELECT id, account_public_id, task_public_id, amount, created_at, updated_at
+	FROM transactions
+	WHERE account_public_id = $1
+`
+	rows, err := d.connection.QueryxContext(ctx, selectQuery, accountPublicID)
+	if err != nil {
+		return nil, fmt.Errorf("select transactions by account id repo: %w", err)
+	}
+
+	var transactions []transaction.Transaction
+
+	for rows.Next() {
+		var transactionToScan transactionEntity
+
+		if err = rows.Scan(
+			&transactionToScan.ID,
+			&transactionToScan.AccountPublicID,
+			&transactionToScan.TaskPublicID,
+			&transactionToScan.Amount,
+			&transactionToScan.CreatedAt,
+			&transactionToScan.UpdatedAt,
+		); err != nil {
+			return nil, fmt.Errorf("scan transaction: %w", err)
+		}
+
+		transaction, err := transactionEntityToTransaction(transactionToScan)
+		if err != nil {
+			return nil, fmt.Errorf("convert transaction: %w", err)
+		}
+
+		transactions = append(transactions, transaction)
+	}
+
+	return transactions, nil
 }
 
 func (d DB) ChargeMoney(ctx context.Context, task taskmodel.Task) error {
