@@ -1,0 +1,46 @@
+version: '3.0'
+
+x-logging: &logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-db: &database-definition
+  image: postgres:${POSTGRES_VERSION}
+  environment:
+    POSTGRES_USER: ${POSTGRES_USER:-postgres}
+    POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+  networks:
+    - ates-network
+  logging: *logging
+  healthcheck:
+    test: [ "CMD", "pg_isready", "-U", "postgres" ]
+
+networks:
+  ates-network:
+    driver: bridge
+
+services:
+#
+#  services
+#
+  ates-task-tracker-db:
+    <<: *database-definition
+    container_name: ates-task-tracker-db
+    ports:
+      - '${TASK_TRACKER_DB_PORT}:5432'
+
+  ates-accounting-db:
+    <<: *database-definition
+    container_name: ates-accounting-db
+    ports:
+      - "${ACCOUNTING_DB_PORT}:5432"
+#
+#  infra
+#
+  ates-auth-keycloak-db:
+    <<: *database-definition
+    container_name: ates-auth-keycloak-db
+    ports:
+      - "${AUTH_KEYCLOAK_DB_PORT}:5432"

@@ -1,41 +1,16 @@
 version: '3.0'
 
+x-logging: &logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+networks:
+  ates-network:
+    driver: bridge
+
 services:
-  ates-auth:
-    image: ates-auth:latest
-    container_name: ates-auth
-    ports:
-      - "3000:3000"
-    depends_on:
-      - db
-      - broker
-    environment:
-      RAILS_ENV: 'development'
-      DATABASE_URL: 'postgres://postgres:password@db:5432/postgres'
-      KAFKA_URL: 'kafka://broker:29092'
-      BROKER_ADAPTER: 'kafka'
-    networks:
-      - ates-network
-
-  ates-task-tracker:
-    build:
-      context: ../../task-tracker
-    container_name: ates-task-tracker
-    ports:
-      - "8080:8080"
-    depends_on:
-      - task-tracker-db
-      - broker
-    environment:
-      DATABASE_DSN: 'postgres://postgres:password@task-tracker-db:5432/postgres'
-      KAFKA_DSN: 'broker:29092'
-    networks:
-      - ates-network
-
-
-
-
-
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
     hostname: zookeeper
@@ -79,37 +54,6 @@ services:
     networks:
       - ates-network
 
-  db:
-    image: postgres:16
-    container_name: psql
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
-    networks:
-      - ates-network
-
-  ates-task-tracker-db:
-    image: postgres:16
-    ports:
-      - "5433:5432"
-    container_name: ates-task-tracker-db
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
-    networks:
-      - ates-network
-
-  ates-accounting-db:
-    image: postgres:16
-    ports:
-      - "5434:5432"
-    container_name: ates-accounting-db
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
-    networks:
-      - ates-network
-
   ates-schema-registry:
     image: confluentinc/cp-schema-registry:7.6.0
     container_name: ates-schema-registry
@@ -117,7 +61,7 @@ services:
       - zookeeper
       - broker
     ports:
-      - "8085:8085"
+      - '${SCHEMA_REGISTRY_PORT}:8085'
     environment:
       SCHEMA_REGISTRY_HOST_NAME: 'ates-schema-registry'
       SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: 'zookeeper:2181'
@@ -127,6 +71,24 @@ services:
     networks:
       - ates-network
 
-networks:
-  ates-network:
-    driver: bridge
+  ates-keycloak-auth:
+    image: docker.io/bitnami/keycloak:23.0.7
+    container_name: ates-keycloak-auth
+    environment:
+      KEYCLOAK_DATABASE_NAME: postgres
+      KEYCLOAK_DATABASE_USER: postgres
+      KEYCLOAK_DATABASE_PASSWORD: password
+      KEYCLOAK_DATABASE_HOST: ates-auth-keycloak-db
+      KEYCLOAK_DATABASE_PORT: 5432
+      KEYCLOAK_LOG_LEVEL: info
+      KEYCLOAK_ADMIN: keycloak
+      KEYCLOAK_ADMIN_PASSWORD: password
+    depends_on:
+      - ates-auth-keycloak-db
+    ports:
+      - '${AUTH_KEYCLOAK_PORT}:8080'
+    networks:
+      - ates-network
+#    volumes:
+#      - ./keycloak/realm.json:/opt/keycloak/data/import/realm.json
+    logging: *logging

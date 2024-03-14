@@ -1,0 +1,42 @@
+version: '3.0'
+
+x-logging: &logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+networks:
+  ates-network:
+    driver: bridge
+
+services:
+  ates-task-tracker:
+    build:
+      context: ../../task-tracker
+    container_name: ates-task-tracker
+    ports:
+      - '${TASK_TRACKER_PORT}:8080'
+    depends_on:
+      - ates-task-tracker-db
+      - broker
+    environment:
+      DATABASE_DSN: 'postgres://postgres:password@ates-task-tracker-db:5432/postgres'
+      KAFKA_DSN: 'broker:29092'
+    networks:
+      - ates-network
+
+  ates-accounting:
+    build:
+      context: ../../accounting
+    container_name: ates-accounting
+    ports:
+      - '${ACCOUNTING_PORT}:8081'
+    depends_on:
+      - ates-accounting-db
+      - broker
+    environment:
+      DATABASE_DSN: 'postgres://postgres:password@ates-accounting-db:5432/postgres'
+      KAFKA_DSN: 'broker:29092'
+    networks:
+      - ates-network
