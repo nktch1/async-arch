@@ -12,18 +12,24 @@ import (
 	prototask "github.com/nikitych1/awesome-task-exchange-system/accounting/pkg/events/proto/task"
 )
 
-type taskRepository interface {
+type transactionsRepository interface {
+	ChargeMoney(context.Context, taskmodel.Task) error
+	PayMoney(context.Context, taskmodel.Task) error
+}
+
+type tasksRepository interface {
 	AddTask(context.Context, taskmodel.Task) error
 	ShuffleTasks(context.Context, taskmodel.Task) error
 	CloseTask(context.Context, taskmodel.Task) error
 }
 
 type TaskWorkflowEventConsumer struct {
-	taskRepository
+	tasksRepository
+	transactionsRepository
 }
 
-func New(taskRepo taskRepository) TaskWorkflowEventConsumer {
-	return TaskWorkflowEventConsumer{taskRepository: taskRepo}
+func New(taskRepo tasksRepository, transactionsRepo transactionsRepository) TaskWorkflowEventConsumer {
+	return TaskWorkflowEventConsumer{tasksRepository: taskRepo, transactionsRepository: transactionsRepo}
 }
 
 func (t TaskWorkflowEventConsumer) Consume(ctx context.Context, event proto.Message) error {
@@ -49,20 +55,26 @@ func (t TaskWorkflowEventConsumer) Consume(ctx context.Context, event proto.Mess
 
 func (t TaskWorkflowEventConsumer) consumeAddedTaskEvent(ctx context.Context, event *prototask.TaskWorkflowEvent) error {
 	getRandomCost := func() int {
-		minIdx, maxIdx := 1, 10
+		minIdx, maxIdx := 10, 20
 		return rand.Intn(maxIdx-minIdx) + minIdx
 	}
 
-	cost := getRandomCost()
-
-	model, err := taskEventToModelTask(event)
+	task, err := taskEventToModelTask(event)
 	if err != nil {
 		return fmt.Errorf("convert event to model: %w", err)
 	}
 
-	model.Cost = cost
+	task.Cost = getRandomCost()
 
-	return t.AddTask(ctx, model)
+	if err = t.tasksRepository.AddTask(ctx, task); err != nil {
+		return fmt.Errorf("replicate add task: %w", err)
+	}
+
+	if err = t.transactionsRepository.ChargeMoney(ctx, task); err != nil {
+		return fmt.Errorf("charge money: %w", err)
+	}
+
+	return nil
 }
 
 func (t TaskWorkflowEventConsumer) consumeShuffledTasksEvents(ctx context.Context, event *prototask.TaskWorkflowEvent) error {
@@ -71,14 +83,22 @@ func (t TaskWorkflowEventConsumer) consumeShuffledTasksEvents(ctx context.Contex
 		return fmt.Errorf("convert event to model: %w", err)
 	}
 
-	return t.taskRepository.ShuffleTasks(ctx, model)
+	return t.tasksRepository.ShuffleTasks(ctx, model)
 }
 
 func (t TaskWorkflowEventConsumer) consumeClosedTaskEvent(ctx context.Context, event *prototask.TaskWorkflowEvent) error {
-	model, err := taskEventToModelTask(event)
+	task, err := taskEventToModelTask(event)
 	if err != nil {
 		return fmt.Errorf("convert event to model: %w", err)
 	}
 
-	return t.taskRepository.CloseTask(ctx, model)
+	if err = t.tasksRepository.CloseTask(ctx, task); err != nil {
+		return fmt.Errorf("replicate close task: %w", err)
+	}
+
+	if err = t.transactionsRepository.PayMoney(ctx, task); err != nil {
+		return fmt.Errorf("pay money: %w", err)
+	}
+
+	return nil
 }

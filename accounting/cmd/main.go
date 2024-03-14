@@ -32,7 +32,7 @@ func main() {
 	tasksRepository := tasksrepo.New(pgConnection)
 	accountingService := accounting.New(transactionsRepository)
 	accountingHandler := handler.New(accountingService)
-	taskWorkflowEventConsumer := taskworkfloweventconsumer.New(tasksRepository)
+	taskWorkflowEventConsumer := taskworkfloweventconsumer.New(tasksRepository, transactionsRepository)
 
 	go consumeAndServe(ctx, kafkaConsumer, taskWorkflowEventConsumer)
 
