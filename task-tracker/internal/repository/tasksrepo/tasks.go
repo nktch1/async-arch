@@ -60,15 +60,18 @@ WHERE account_public_id = $1
 }
 
 func (d DB) AddTask(ctx context.Context, task taskmodel.Task) (taskmodel.Task, error) {
+	publicID := uuid.NewV4()
+
 	insertQuery := `
 INSERT INTO tasks 
-    (account_public_id, description, status) 
+    (public_id, account_public_id, description, status) 
 VALUES 
-    ($1, $2, $3)`
+    ($1, $2, $3, $4)`
 
 	_, err := d.connection.ExecContext(
 		ctx,
 		insertQuery,
+		publicID,
 		task.AccountPublicID,
 		task.Description,
 		task.Status,
@@ -77,6 +80,7 @@ VALUES
 		return taskmodel.Task{}, fmt.Errorf("add task repo: %w", err)
 	}
 
+	task.PublicID = publicID
 	return task, nil
 }
 
@@ -131,14 +135,15 @@ UPDATE tasks
 SET account_public_id = $1
 WHERE public_id = $2`
 
-	for _, openedTask := range openedTasks {
+	for idx := range openedTasks {
 		randomAssigneeID := getRandomAccount(accounts).PublicID
+		openedTasks[idx].AccountPublicID = randomAssigneeID
 
 		_, err = tx.ExecContext(
 			ctx,
 			updateQuery,
 			randomAssigneeID,
-			openedTask.PublicID,
+			openedTasks[idx].PublicID,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("close task repo: %w", err)
@@ -208,5 +213,6 @@ WHERE public_id = $1`
 		return taskmodel.Task{}, fmt.Errorf("commit tx task repo: %w", err)
 	}
 
+	task.Status = taskmodel.DoneTaskStatus
 	return task, nil
 }

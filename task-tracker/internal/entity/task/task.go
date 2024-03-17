@@ -5,8 +5,8 @@ import uuid "github.com/satori/go.uuid"
 type Status string
 
 const (
-	New  Status = "new"
-	Done Status = "done"
+	NewTaskStatus  Status = "new"
+	DoneTaskStatus Status = "done"
 )
 
 type Task struct {

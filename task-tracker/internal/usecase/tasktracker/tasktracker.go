@@ -48,7 +48,7 @@ func (d TaskTracker) AddTask(ctx context.Context, task task.Task) error {
 	}
 
 	if err = d.taskProducer.ProduceAddedTaskEvent(ctx, affectedTask); err != nil {
-		return fmt.Errorf("send shuffled tasks event: %w", err)
+		return fmt.Errorf("send added tasks event: %w", err)
 	}
 
 	return nil

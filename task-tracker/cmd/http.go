@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -27,8 +26,6 @@ func listenAndServe(ctx context.Context, handler *mux.Router) {
 
 		close(idleConnectionsClosed)
 	}()
-
-	fmt.Println("task tracker listening on :8080...")
 
 	if err := httpServer.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 		log.Fatalf("HTTP server error: %v", err)
