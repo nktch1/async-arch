@@ -49,6 +49,7 @@ func taskToTaskAddedEvent(task task.Task) *prototask.TaskWorkflowEvent {
 	event.TaskPayload = taskToProtoTask(task)
 	return event
 }
+
 func taskToTaskShuffledEvent(task task.Task) *prototask.TaskWorkflowEvent {
 	event := createBaseEvent(prototask.TaskWorkflowEventType_TASK_SHUFFLED_EVENT)
 	event.TaskPayload = taskToProtoTask(task)
