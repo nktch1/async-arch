@@ -1,11 +1,5 @@
 version: '3.0'
 
-x-logging: &logging
-  driver: "json-file"
-  options:
-    max-size: "10m"
-    max-file: "3"
-
 networks:
   ates-network:
     driver: bridge
@@ -96,7 +90,6 @@ services:
       - ates-network
     volumes:
       - ./keycloak/ates-realm.json:/opt/keycloak/data/import/ates-realm.json
-    logging: *logging
 
   kafka-ui:
     container_name: kafka-ui

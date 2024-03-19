@@ -1,11 +1,5 @@
 version: '3.0'
 
-x-logging: &logging
-  driver: "json-file"
-  options:
-    max-size: "10m"
-    max-file: "3"
-
 x-db: &database-definition
   image: postgres:${POSTGRES_VERSION}
   environment:
@@ -13,7 +7,6 @@ x-db: &database-definition
     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
   networks:
     - ates-network
-  logging: *logging
   healthcheck:
     test: [ "CMD", "pg_isready", "-U", "postgres" ]
 
