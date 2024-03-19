@@ -13,19 +13,17 @@ import (
 )
 
 func main() {
-	ctx := context.Background()
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	defer cancelFunc()
 
 	pgConnection, err := initStorage(ctx)
 	if err != nil {
 		log.Fatalf("init storage: %s", err.Error())
 	}
 
-	kafkaProducer, kafkaConsumer, err := initKafka(ctx)
-	defer kafkaProducer.Close()
-	defer kafkaConsumer.Close()
-
+	_, kafkaConsumer, err := initKafka(ctx)
 	if err != nil {
-		log.Fatalf("init kafka producer: %s", err.Error())
+		log.Fatalf("init kafka: %s", err.Error())
 	}
 
 	transactionsRepository := transactionsrepo.New(pgConnection)

@@ -72,7 +72,8 @@ services:
       - ates-network
 
   ates-keycloak-auth:
-    image: docker.io/bitnami/keycloak:23.0.7
+    build:
+      context: keycloak
     container_name: ates-keycloak-auth
     environment:
       KEYCLOAK_DATABASE_NAME: postgres
@@ -83,12 +84,28 @@ services:
       KEYCLOAK_LOG_LEVEL: info
       KEYCLOAK_ADMIN: keycloak
       KEYCLOAK_ADMIN_PASSWORD: password
+      KAFKA_TOPIC: keycloak-events
+      KAFKA_CLIENT_ID: keycloak
+      KAFKA_BOOTSTRAP_SERVERS: broker:29092
     depends_on:
       - ates-auth-keycloak-db
+      - broker
     ports:
       - '${AUTH_KEYCLOAK_PORT}:8080'
     networks:
       - ates-network
-#    volumes:
-#      - ./keycloak/realm.json:/opt/keycloak/data/import/realm.json
+    volumes:
+      - ./keycloak/ates-realm.json:/opt/keycloak/data/import/ates-realm.json
     logging: *logging
+
+  kafka-ui:
+    container_name: kafka-ui
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - 8090:8080
+    environment:
+      DYNAMIC_CONFIG_ENABLED: 'true'
+    volumes:
+      - ~/.config/kui/config.yml:/etc/kafkaui/dynamic_config.yaml
+    networks:
+      - ates-network

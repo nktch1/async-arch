@@ -3,6 +3,7 @@ package kafka
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/confluentinc/confluent-kafka-go/schemaregistry"
@@ -68,32 +69,46 @@ func (c *srConsumer) RegisterMessage(messageType protoreflect.MessageType) error
 // Run consumer
 func (c *srConsumer) Run(ctx context.Context, messageType protoreflect.MessageType, topic string, handler eventsConsumer) error {
 	if err := c.consumer.SubscribeTopics([]string{topic}, nil); err != nil {
-		return err
+		return fmt.Errorf("subscribe topic: %w", err)
 	}
 
 	if err := c.deserializer.ProtoRegistry.RegisterMessage(messageType); err != nil {
-		return err
+		return fmt.Errorf("register message: %w", err)
 	}
 
 	for {
-		kafkaMsg, err := c.consumer.ReadMessage(noTimeout)
-		if err != nil {
-			return err
-		}
-
-		msg, err := c.deserializer.Deserialize(topic, kafkaMsg.Value)
-		if err != nil {
-			return err
-		}
-
-		if err = handler.Consume(ctx, msg.(proto.Message)); err != nil {
-			return err
-		}
-
-		if _, err = c.consumer.CommitMessage(kafkaMsg); err != nil {
-			return err
+		select {
+		case <-ctx.Done():
+			return nil
+		default:
+			if err := c.handleMessage(ctx, topic, handler); err != nil {
+				log.Printf("handle message error: %s", err.Error())
+				continue
+			}
 		}
 	}
+}
+
+func (c *srConsumer) handleMessage(ctx context.Context, topic string, handler eventsConsumer) error {
+	kafkaMsg, err := c.consumer.ReadMessage(noTimeout)
+	if err != nil {
+		return fmt.Errorf("read message: %w", err)
+	}
+
+	msg, err := c.deserializer.Deserialize(topic, kafkaMsg.Value)
+	if err != nil {
+		return fmt.Errorf("deserialize: %w", err)
+	}
+
+	if err = handler.Consume(ctx, msg.(proto.Message)); err != nil {
+		return fmt.Errorf("consume: %w", err)
+	}
+
+	if _, err = c.consumer.CommitMessage(kafkaMsg); err != nil {
+		return fmt.Errorf("commit: %w", err)
+	}
+
+	return nil
 }
 
 // Close all connections
